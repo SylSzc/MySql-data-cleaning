@@ -1,0 +1,144 @@
+# DATA CLEANING PROJECT 
+
+SELECT * FROM portfolio.us_household_income;
+
+SELECT * FROM portfolio.us_household_income_statistics;
+
+-- Changing column name 
+
+ALTER TABLE portfolio.us_household_income_statistics 
+RENAME COLUMN `ï»¿id` TO `id`;
+
+
+
+-- Checking number of records
+
+SELECT COUNT(id) 
+FROM portfolio.us_household_income;
+
+SELECT COUNT(id) 
+FROM portfolio.us_household_income_statistics;
+
+-- Identifying and removing duplicates 
+
+SELECT id, COUNT(id) 
+FROM portfolio.us_household_income
+GROUP BY id
+HAVING COUNT(id) >1;
+
+SELECT *
+FROM (SELECT row_id,
+      id, 
+      ROW_NUMBER() OVER(PARTITION BY id ORDER BY id) AS row_num
+      FROM portfolio.us_household_income) AS row_table
+WHERE row_num > 1 
+;
+
+DELETE FROM portfolio.us_household_income 
+WHERE row_id IN
+          (
+        	SELECT row_id
+        	FROM (SELECT row_id,
+        	id, 
+        	ROW_NUMBER() OVER(PARTITION BY id ORDER BY id) AS row_num
+        	FROM portfolio.us_household_income) AS row_table
+	        WHERE row_num > 1 
+          ); 
+    
+-- Removing duplicates for another table 
+
+SELECT id, COUNT(id) 
+FROM us_household_income_statistics
+GROUP BY id
+HAVING COUNT(id) >1; -- no duplicates in statistics table 
+
+-- (data integrity check) Identifying missing or misspelled values.
+
+SELECT *
+FROM us_household_income;
+
+
+SELECT State_Name,
+  COUNT(State_Name)
+FROM us_household_income
+GROUP BY State_Name
+;
+
+UPDATE us_household_income
+SET State_Name = 'Georgia'
+WHERE  State_Name LIKE 'geor%';
+
+UPDATE us_household_income
+SET State_Name = 'Alabama'
+WHERE  State_Name = 'alabama';
+
+
+SELECT State_ab, COUNT(State_ab)
+FROM us_household_income
+GROUP BY State_ab;
+
+SELECT *
+FROM us_household_income
+WHERE County ='';
+
+SELECT *
+FROM us_household_income
+WHERE City ='';
+
+SELECT *
+FROM us_household_income
+WHERE Place ='';
+
+SELECT *
+FROM us_household_income
+WHERE County ='Autauga County'
+AND City = 'Vinemont'
+;
+
+UPDATE us_household_income 
+SET 
+    Place = 'Autaugaville'
+WHERE
+    County = 'Autauga County'
+        AND City = 'Vinemont'
+;
+
+SELECT *
+FROM us_household_income;
+
+SELECT Type, COUNT(Type)
+FROM us_household_income
+GROUP BY Type;
+
+SELECT Type 
+FROM us_household_income
+WHERE Type LIKE 'Boroughs';
+
+UPDATE us_household_income
+SET Type = 'Borough'
+WHERE Type LIKE 'Boroughs';
+
+
+SELECT `Primary`, 
+COUNT(`Primary`)
+FROM us_household_income
+GROUP BY 1;
+
+UPDATE us_household_income
+SET `Primary` = 'Place'
+WHERE `Primary` = 'place';
+
+
+SELECT ALand, AWater
+FROM us_household_income
+WHERE AWater = '' OR AWater = 0 OR AWater IS NULL;
+
+SELECT ALand, AWater
+FROM us_household_income
+WHERE ALand = '' OR ALand = 0 OR ALand IS NULL;
+
+
+SELECT ALand, AWater
+FROM us_household_income
+WHERE (ALand = '' OR ALand = 0 OR ALand IS NULL)
+AND (AWater = '' OR AWater = 0 OR AWater IS NULL);
